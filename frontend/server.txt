@@ -1,0 +1,1 @@
+cd C:\cygwin64\home\BTCES\roninaiagent\frontend; Start-Process npm -ArgumentList 'run','dev' -NoNewWindow;

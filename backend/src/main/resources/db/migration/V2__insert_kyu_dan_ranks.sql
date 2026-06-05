@@ -1,0 +1,22 @@
+INSERT INTO ranks (name, level, min_projects, max_projects, belt_color) VALUES
+('10th kyu', 20, 0, 0, 'white'),
+('9th kyu', 19, 1, 2, 'orange'),
+('8th kyu', 18, 3, 4, 'blue'),
+('7th kyu', 17, 5, 7, 'blue'),
+('6th kyu', 16, 8, 11, 'yellow'),
+('5th kyu', 15, 12, 15, 'yellow'),
+('4th kyu', 14, 16, 19, 'green'),
+('3rd kyu', 13, 20, 29, 'green'),
+('2nd kyu', 12, 30, 39, 'brown'),
+('1st kyu', 11, 40, 49, 'brown'),
+
+('1st dan', 10, 50, 69, 'black'),
+('2nd dan', 9, 70, 89, 'black'),
+('3rd dan', 8, 90, 119, 'black'),
+('4th dan', 7, 120, 149, 'black'),
+('5th dan', 6, 150, 199, 'black'),
+('6th dan', 5, 200, 259, 'black'),
+('7th dan', 4, 260, 329, 'black'),
+('8th dan', 3, 330, 419, 'black'),
+('9th dan', 2, 420, 499, 'black'),
+('10th dan', 1, 500, 99999, 'black');

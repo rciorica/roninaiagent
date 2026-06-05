@@ -1,0 +1,431 @@
+openapi: 3.1.0
+info:
+  title: Ronin API
+  version: 0.1.0
+  description: Ronin – kata-style full‑stack practice platform (backend API)
+
+servers:
+  - url: https://api.ronin.local
+    description: Local/dev server
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid data
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and obtain JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user info
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+
+  /users/{id}/rank:
+    get:
+      tags: [Users]
+      summary: Get rank for user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Rank
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rank'
+        '404':
+          description: User not found
+
+  /projects:
+    get:
+      tags: [Projects]
+      summary: List projects for current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+    post:
+      tags: [Projects]
+      summary: Create project for current user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Created project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /projects/{id}:
+    get:
+      tags: [Projects]
+      summary: Get project by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Project not found
+
+  /projects/{id}/messages:
+    post:
+      tags: [Projects]
+      summary: Add message to project thread
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        '201':
+          description: Created message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMessage'
+
+  /llm/chat:
+    post:
+      tags: [LLM]
+      summary: Chat with LLM for a project
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: LLM response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Invalid request
+        '429':
+          description: Token limit reached
+
+  /tests/run/{projectId}:
+    post:
+      tags: [Tests]
+      summary: Enqueue test run for project
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '202':
+          description: Test run created and queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTestRun'
+
+  /tests/{runId}:
+    get:
+      tags: [Tests]
+      summary: Get test run status and logs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Test run
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTestRun'
+        '404':
+          description: Run not found
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      required: [email, token]
+      properties:
+        email:
+          type: string
+          format: email
+        token:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+          nullable: true
+        completedProjects:
+          type: integer
+        rank:
+          $ref: '#/components/schemas/Rank'
+        createdAt:
+          type: string
+          format: date-time
+
+    Rank:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          example: "3rd kyu"
+        level:
+          type: integer
+        minProjects:
+          type: integer
+        maxProjects:
+          type: integer
+        beltColor:
+          type: string
+        meaning:
+          type: string
+          example: "Fluidity and adaptability"
+
+    ProjectPhase:
+      type: string
+      enum: [FRONTEND, BACKEND, DB, CLOUD, TESTING]
+
+    ProjectStatus:
+      type: string
+      enum: [IN_PROGRESS, UNDER_REVIEW, COMPLETED, FAILED]
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        phase:
+          $ref: '#/components/schemas/ProjectPhase'
+        status:
+          $ref: '#/components/schemas/ProjectStatus'
+        repoUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateProjectRequest:
+      type: object
+      required: [name, description, phase]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        phase:
+          $ref: '#/components/schemas/ProjectPhase'
+
+    ProjectMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        sender:
+          type: string
+          example: "user"
+        message:
+          type: string
+        modelUsed:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ChatRequest:
+      type: object
+      required: [projectId, message]
+      properties:
+        projectId:
+          type: integer
+        message:
+          type: string
+
+    ChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+        modelUsed:
+          type: string
+        modelSwitched:
+          type: boolean
+        previousModel:
+          type: string
+          nullable: true
+
+    ProjectTestRun:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        status:
+          type: string
+          example: "PENDING"
+        logs:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time

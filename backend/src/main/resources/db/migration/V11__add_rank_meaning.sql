@@ -1,0 +1,25 @@
+ALTER TABLE ranks ADD COLUMN meaning VARCHAR(255);
+
+UPDATE ranks SET meaning = CASE
+  WHEN name = '10th kyu' THEN 'Purity and potential'
+  WHEN name = '9th kyu' THEN 'Stability and basic conditioning'
+  WHEN name = '8th kyu' THEN 'Fluidity and adaptability'
+  WHEN name = '7th kyu' THEN 'Fluidity and adaptability'
+  WHEN name = '6th kyu' THEN 'Power and body awareness'
+  WHEN name = '5th kyu' THEN 'Power and body awareness'
+  WHEN name = '4th kyu' THEN 'Emotion and sensitivity'
+  WHEN name = '3rd kyu' THEN 'Emotion and sensitivity'
+  WHEN name = '2nd kyu' THEN 'Practical application and creativity'
+  WHEN name = '1st kyu' THEN 'Practical application and creativity'
+  WHEN name = '1st dan' THEN 'Maturity and mastery'
+  WHEN name = '2nd dan' THEN 'Maturity and mastery'
+  WHEN name = '3rd dan' THEN 'Maturity and mastery'
+  WHEN name = '4th dan' THEN 'Maturity and mastery'
+  WHEN name = '5th dan' THEN 'Maturity and mastery'
+  WHEN name = '6th dan' THEN 'Maturity and mastery'
+  WHEN name = '7th dan' THEN 'Maturity and mastery'
+  WHEN name = '8th dan' THEN 'Maturity and mastery'
+  WHEN name = '9th dan' THEN 'Maturity and mastery'
+  WHEN name = '10th dan' THEN 'Maturity and mastery'
+  ELSE 'Rank progression information'
+END;

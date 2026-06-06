@@ -1,0 +1,88 @@
+{
+  "name": "ronin-desktop",
+  "version": "1.0.0",
+  "description": "Ronin - AI Agent Master Controller Desktop Application",
+  "main": "dist/electron/main.js",
+  "homepage": "./",
+  "author": "Ronin Team",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:vite\" \"wait-on http://localhost:5173 && npm run dev:electron\"",
+    "dev:vite": "cd ../frontend && npm run dev",
+    "dev:electron": "cross-env NODE_ENV=development electron .",
+    "clean-dist": "node scripts/clean-dist.js",
+    "build": "npm run clean-dist && npm run build:frontend && npm run copy-frontend-dist && npm run build:electron",
+    "build:frontend": "cross-env VITE_API_URL=https://ronin-backend-d8bbbbb0386c.herokuapp.com npm --prefix ../frontend run build",
+    "copy-frontend-dist": "node scripts/copy-frontend-dist.js",
+    "build:electron": "tsc",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:portable": "npm run build && electron-builder --win portable",
+    "pack": "npm run build && electron-builder --dir",
+    "pretest": "npm run build:electron"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@types/electron": "^1.6.10",
+    "@types/node": "^20.0.0",
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "electron": "^30.0.0",
+    "electron-builder": "^24.0.0",
+    "typescript": "^5.3.0",
+    "wait-on": "^7.0.0"
+  },
+  "build": {
+    "appId": "com.ronin.app",
+    "productName": "Ronin",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "dist/index.html",
+      "dist/favicon.svg",
+      "dist/icons.svg",
+      "dist/assets/**/*",
+      "dist/electron/**/*",
+      "build/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "certificateFile": null,
+      "certificatePassword": null,
+      "signingHashAlgorithms": [
+        "sha256"
+      ],
+      "sign": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Ronin",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}.exe"
+    }
+  }
+}

@@ -1,5 +1,29 @@
 {
+  "name": "ronin",
+  "version": "1.0.0",
+  "description": "Ronin - AI Agent Master Controller (Web + Desktop)",
+  "private": true,
+  "scripts": {
+    "setup": "npm install && cd frontend && npm install && cd ../desktop && npm install && cd ..",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:web\" \"npm run dev:desktop\"",
+    "dev:backend": "cd backend && mvn spring-boot:run",
+    "dev:web": "cd frontend && npm run dev",
+    "dev:desktop": "cd desktop && npm run dev",
+    "build": "npm run build:backend && npm run build:web && npm run build:desktop",
+    "build:backend": "cd backend && mvn clean package",
+    "build:web": "cd frontend && npm run build",
+    "build:desktop": "cd desktop && npm run build",
+    "test": "npm run test:backend && npm run test:web && npm run test:desktop",
+    "test:backend": "cd backend && mvn test",
+    "test:web": "cd frontend && npm run test",
+    "test:desktop": "cd desktop && npm run pretest",
+    "desktop:dist": "cd desktop && npm run dist:win",
+    "desktop:portable": "cd desktop && npm run dist:portable"
+  },
   "dependencies": {
     "serve": "^14.2.6"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.2"
   }
 }

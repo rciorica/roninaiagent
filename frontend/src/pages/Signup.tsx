@@ -165,7 +165,7 @@ export function SignupPage() {
           {/* Login Link */}
           <p className="text-center text-xs sm:text-sm text-gray-600 mt-4 sm:mt-6">
             Already have an account?{" "}
-            <a href="/login" className="font-medium text-slate-900 hover:underline">
+            <a href={window.location.protocol === 'file:' ? '#/login' : '/login'} className="font-medium text-slate-900 hover:underline">
               Log in
             </a>
           </p>

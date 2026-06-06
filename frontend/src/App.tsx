@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as BrowserRouter,
+  HashRouter as HashRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import { LoginPage } from "./pages/Login";
@@ -91,8 +97,10 @@ export default function App() {
     setCurrentUser(null);
   };
 
+  const AppRouter = window.location.protocol === "file:" ? HashRouter : BrowserRouter;
+
   return (
-    <Router>
+    <AppRouter>
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
@@ -128,6 +136,6 @@ export default function App() {
           }
         />
       </Routes>
-    </Router>
+    </AppRouter>
   );
 }

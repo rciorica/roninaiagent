@@ -216,7 +216,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           <p className="text-center text-xs sm:text-sm text-gray-600 mt-4 sm:mt-6">
             Don't have an account?{" "}
             <a
-              href="/signup"
+              href={window.location.protocol === 'file:' ? '#/signup' : '/signup'}
               className="font-medium text-slate-900 hover:underline"
             >
               Sign up

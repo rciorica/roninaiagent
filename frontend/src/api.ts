@@ -1,7 +1,11 @@
 // Get API base URL from environment variable (Heroku) or use relative path (local)
 // In production: VITE_API_URL is set to the backend URL
 // In development: Use relative paths (Vite proxy handles routing to backend)
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (
+  typeof window !== 'undefined' && window.location.protocol === 'file:'
+    ? 'https://ronin-backend-d8bbbbb0386c.herokuapp.com'
+    : ''
+);
 
 type LoginRequest = {
   email: string;
@@ -64,11 +68,17 @@ const apiFetch = async (path: string, options: RequestInit = {}) => {
 
   const url = API_BASE_URL ? `${API_BASE_URL}${path}` : path;
 
-  const response = await fetch(url, {
+  const fetchOptions: RequestInit = {
     ...options,
     headers,
-    credentials: "include",
-  });
+  };
+
+  // Only include credentials for non-file protocol (Electron/file:// can't use credentials)
+  if (typeof window !== 'undefined' && window.location.protocol !== 'file:') {
+    fetchOptions.credentials = "include";
+  }
+
+  const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
     const text = await response.text();
@@ -79,6 +89,7 @@ const apiFetch = async (path: string, options: RequestInit = {}) => {
 
   if (response.status === 204) {
     return null;
+
   }
 
   return response.json();

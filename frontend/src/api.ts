@@ -262,3 +262,44 @@ export async function fetchCurrentUser(token: string): Promise<CurrentUser> {
     projectsToNextRank: response.projectsToNextRank ?? 0,
   };
 }
+
+// Admin API helpers
+export async function fetchAdminDashboardStats(token: string) {
+  return apiFetch("/admin/dashboard/stats", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export async function fetchAdminUsersStats(token: string) {
+  return apiFetch("/admin/users/stats", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export async function fetchAdminProjectsStats(token: string) {
+  return apiFetch("/admin/projects/stats", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export async function fetchAdminLoginEvents(token: string) {
+  return apiFetch("/admin/login-events", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export async function fetchAdminSummary(token: string) {
+  return apiFetch("/admin/summary", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

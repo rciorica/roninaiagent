@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import { LoginPage } from "./pages/Login";
 import { SignupPage } from "./pages/Signup";
 import { fetchCurrentUser } from "./api";
@@ -127,6 +128,10 @@ export default function App() {
                         onLogout={handleLogout}
                       />
                     }
+                  />
+                  <Route
+                    path="/admin"
+                    element={<AdminDashboard token={token} />}
                   />
                 </Routes>
               </MainLayout>

@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { signup } from "../api";
 import BeltBadge from "../components/BeltBadge";
 
-export function SignupPage() {
+interface SignupPageProps {
+  onLogin: (token: string, email: string) => void;
+}
+
+export function SignupPage({ onLogin }: SignupPageProps) {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -43,9 +47,10 @@ export function SignupPage() {
     }
 
     try {
-      await signup({ username, email, password });
-      // Success - redirect to login
-      navigate("/login", { state: { email } });
+      const response = await signup({ username, email, password });
+      // Success - store token and redirect to dashboard
+      onLogin(response.token, response.email);
+      navigate("/");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Signup failed. Please try again."

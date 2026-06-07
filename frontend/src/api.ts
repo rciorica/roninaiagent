@@ -133,7 +133,7 @@ export async function chatWithLLM(
   });
 }
 
-export async function signup(body: SignupRequest): Promise<{ email: string; username: string; message: string }> {
+export async function signup(body: SignupRequest): Promise<{ email: string; username: string; token: string; message: string }> {
   return apiFetch("/auth/signup", {
     method: "POST",
     body: JSON.stringify(body),

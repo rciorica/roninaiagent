@@ -10,5 +10,12 @@ import lombok.NoArgsConstructor;
 public class SignupResponse {
     private String email;
     private String username;
+    private String token;
     private String message;
+
+    public SignupResponse(String email, String username, String message) {
+        this.email = email;
+        this.username = username;
+        this.message = message;
+    }
 }

@@ -1,6 +1,6 @@
 {
   "name": "ronin-desktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Ronin - AI Agent Master Controller Desktop Application",
   "main": "dist/electron/main.js",
   "homepage": "./",
@@ -76,10 +76,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Ronin",
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "installerHeaderIcon": "build/icon.ico"
+      "shortcutName": "Ronin"
     },
     "portable": {
       "artifactName": "${productName}-${version}.exe"

@@ -115,7 +115,7 @@ public class AuthService {
     }
 
     /**
-     * Signup: Create new user account
+     * Signup: Create new user account and return JWT token
      */
     public SignupResponse signup(SignupRequest req) {
         log.debug("Signing up new user: {}", req.getEmail());
@@ -133,10 +133,14 @@ public class AuthService {
         
         UserEntity savedUser = userRepository.save(user);
         
+        // Generate JWT token for automatic login
+        String token = jwtService.generateToken(savedUser);
+        
         return new SignupResponse(
                 savedUser.getEmail(),
                 req.getUsername() != null ? req.getUsername() : savedUser.getEmail(),
-                "Account created successfully. Please log in."
+                token,
+                "Account created successfully. Welcome to Ronin!"
         );
     }
 

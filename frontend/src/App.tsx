@@ -104,7 +104,7 @@ export default function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/signup" element={<SignupPage onLogin={handleLogin} />} />
 
         {/* Protected Routes */}
         <Route

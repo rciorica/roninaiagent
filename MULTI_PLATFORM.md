@@ -31,6 +31,10 @@ ronin/
 │   ├── package.json
 │   ├── README.md
 │   └── SETUP.md
+├── vscode-extension/     # VS Code extension package
+│   ├── src/              # Extension source code
+│   ├── package.json
+│   └── README.md
 ├── test-runner/          # Automated test runner
 ├── package.json          # Root workspace config
 └── README.md            # This file

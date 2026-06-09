@@ -21,6 +21,11 @@ public class UserController {
         return userService.getRankForUser(id);
     }
 
+    @GetMapping("/me/rank")
+    public RankEntity getCurrentUserRank() {
+        return userService.getCurrentUserRank();
+    }
+
     @GetMapping("/me")
     public UserProfileResponse getCurrentUser() {
         return userService.getCurrentUserProfile();

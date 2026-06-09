@@ -1,0 +1,94 @@
+{
+  "name": "ronin-vscode",
+  "displayName": "Ronin AI Agent",
+  "publisher": "rcioricaronin",
+  "icon": "icon.png",
+  "version": "0.1.6",
+  "description": "VS Code extension for the Ronin AI Agent.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rcioricaronin/roninaiagent"
+  },
+  "bugs": {
+    "url": "https://github.com/rcioricaronin/roninaiagent/issues"
+  },
+  "homepage": "https://github.com/rcioricaronin/roninaiagent#readme",
+  "categories": ["Other"],
+  "engines": {
+    "vscode": "^1.81.0"
+  },
+  "activationEvents": [
+    "onCommand:ronin.openAgentView",
+    "onCommand:ronin.login",
+    "onCommand:ronin.openAgentWebview",
+    "onCommand:ronin.refresh",
+    "onView:roninAgentView"
+  ],
+  "main": "./out/extension.js",
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npm run compile && npx @vscode/vsce package",
+    "package:vsix": "npx @vscode/vsce package",
+    "publish": "npx @vscode/vsce publish",
+    "lint": "echo \"No lint configured yet\""
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "ronin.openAgentView",
+        "title": "Ronin: Open Agent View"
+      },
+      {
+        "command": "ronin.login",
+        "title": "Ronin: Sign in to Ronin"
+      },
+      {
+        "command": "ronin.openAgentWebview",
+        "title": "Ronin: Open Dashboard Panel"
+      },
+      {
+        "command": "ronin.refresh",
+        "title": "Ronin: Refresh Agent View"
+      },
+      {
+        "command": "ronin.openProject",
+        "title": "Ronin: Open Project Details"
+      },
+      {
+        "command": "ronin.showRank",
+        "title": "Ronin: Show My Rank"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "roninAgentView",
+          "name": "Ronin Agent"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Ronin",
+      "properties": {
+        "ronin.backendUrl": {
+          "type": "string",
+          "default": "https://ronin-backend.herokuapp.com",
+          "description": "Primary backend API URL used by the Ronin VS Code extension."
+        },
+        "ronin.fallbackBackendUrl": {
+          "type": "string",
+          "default": "http://localhost:8080",
+          "description": "Fallback backend URL to use if the Heroku backend is unavailable."
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.81.0",
+    "@vscode/vsce": "^2.0.0",
+    "typescript": "^5.5.0"
+  }
+}

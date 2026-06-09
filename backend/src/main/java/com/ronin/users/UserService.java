@@ -30,4 +30,9 @@ public class UserService {
         int projectsToNextRank = rankService.getProjectsToNextRank(user.getCompletedProjects());
         return new UserProfileResponse(user.getId(), user.getEmail(), user.getCompletedProjects(), rank, projectsToNextRank);
     }
+
+    public RankEntity getCurrentUserRank() {
+        UserEntity user = currentUserService.get();
+        return rankService.getRankForCompletedProjects(user.getCompletedProjects());
+    }
 }

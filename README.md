@@ -82,6 +82,11 @@ ronin/
 │   ├── package.json      # Electron configuration
 │   └── README.md
 │
+├── vscode-extension/     # VS Code extension for Ronin
+│   ├── src/              # Extension source code
+│   ├── package.json      # Extension manifest and scripts
+│   └── README.md
+│
 ├── test-runner/          # Automated test execution
 │   └── README.md
 │

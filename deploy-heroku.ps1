@@ -6,6 +6,11 @@ param(
     [string]$FrontendApp = "ronin-frontend"
 )
 
+$herokuInstallDir = "C:\Program Files\heroku\bin"
+if (Test-Path $herokuInstallDir) {
+    $env:Path = "$herokuInstallDir;$env:Path"
+}
+
 function Write-Header {
     param([string]$Message)
     Write-Host ""

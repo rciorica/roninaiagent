@@ -92,6 +92,7 @@ export default function Dashboard({ token, currentUser, onLogin, onLogout }: Das
   const completedProjects = projects.filter((project) => project.status === "COMPLETED");
   const activeProjects = projects.filter((project) => project.status !== "COMPLETED");
   const [llmMessage, setLlmMessage] = useState("");
+  const [selectedAction, setSelectedAction] = useState('General');
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -251,10 +252,14 @@ export default function Dashboard({ token, currentUser, onLogin, onLogout }: Das
 
     setLlmLoading(true);
 
+    const actionPrefix = selectedAction !== 'General' ? `${selectedAction}:\n\n` : '';
+    const requestMessage = `${actionPrefix}${llmMessage}`;
+
     try {
       const response: LLMChatResponse = await chatWithLLM(token, {
         projectId: selectedProjectId,
-        message: llmMessage,
+        message: requestMessage,
+        actionType: selectedAction !== 'General' ? selectedAction : undefined,
       });
       setLlmResponse(response.response);
       setModelSwitched(response.modelSwitched);
@@ -511,6 +516,28 @@ export default function Dashboard({ token, currentUser, onLogin, onLogout }: Das
                         {project.name} ({project.phase})
                       </option>
                     ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="actionType" className="block text-sm font-medium text-gray-700">Action</label>
+                  <select
+                    id="actionType"
+                    value={selectedAction}
+                    onChange={(event) => setSelectedAction(event.target.value)}
+                    className="mt-1 w-full rounded-xl border-gray-300 bg-gray-50 px-4 py-3"
+                  >
+                    <option value="General">General</option>
+                    <option value="Explain selected code">Explain selected code</option>
+                    <option value="Fix selected code">Fix selected code</option>
+                    <option value="Refactor selection">Refactor selection</option>
+                    <option value="Generate tests for selection">Generate tests for selection</option>
+                    <option value="Create a new file from prompt">Create a new file from prompt</option>
+                    <option value="Insert snippet into active editor">Insert snippet into active editor</option>
+                    <option value="Replace active editor content">Replace active editor content</option>
+                    <option value="Document selected code">Document selected code</option>
+                    <option value="Summarize current file">Summarize current file</option>
+                    <option value="Search workspace and apply changes">Search workspace and apply changes</option>
+                    <option value="Open file with Ronin suggestion">Open file with Ronin suggestion</option>
                   </select>
                 </div>
                 <div>

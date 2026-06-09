@@ -26,6 +26,7 @@ type CreateProjectRequest = {
 type LLMChatRequest = {
   projectId: number;
   message: string;
+  actionType?: string;
 };
 
 type LLMChatResponse = {

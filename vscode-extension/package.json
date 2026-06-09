@@ -3,7 +3,7 @@
   "displayName": "Ronin AI Agent",
   "publisher": "rcioricaronin",
   "icon": "icon.png",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "VS Code extension for the Ronin AI Agent.",
   "license": "MIT",
   "repository": {
@@ -22,6 +22,8 @@
     "onCommand:ronin.openAgentView",
     "onCommand:ronin.login",
     "onCommand:ronin.openAgentWebview",
+    "onCommand:ronin.askSelection",
+    "onCommand:ronin.performEditorAction",
     "onCommand:ronin.refresh",
     "onView:roninAgentView"
   ],
@@ -47,6 +49,14 @@
       {
         "command": "ronin.openAgentWebview",
         "title": "Ronin: Open Dashboard Panel"
+      },
+      {
+        "command": "ronin.askSelection",
+        "title": "Ronin: Ask About Selection"
+      },
+      {
+        "command": "ronin.performEditorAction",
+        "title": "Ronin: Perform Editor Action"
       },
       {
         "command": "ronin.refresh",

@@ -113,6 +113,16 @@ public class LLMService {
         // append user request at the end so the LLM knows what to perform
         promptBuilder.append("USER REQUEST:\n").append(req.message());
 
+        if (req.actionType() != null && !req.actionType().isBlank()) {
+            promptBuilder.append("\n\nACTION TYPE: ").append(req.actionType()).append("\n");
+        }
+        if (req.filePath() != null && !req.filePath().isBlank()) {
+            promptBuilder.append("\n\nACTIVE EDITOR FILE: ").append(req.filePath()).append("\n");
+        }
+        if (req.activeEditorText() != null && !req.activeEditorText().isBlank()) {
+            promptBuilder.append("ACTIVE EDITOR CONTENT:\n").append(req.activeEditorText()).append("\n");
+        }
+
         LLMAgent agent = llmAgentRegistry.resolve(chosen.getName());
         LLMResult llmResult = agent.generate(chosen.getName(), promptBuilder.toString());
 

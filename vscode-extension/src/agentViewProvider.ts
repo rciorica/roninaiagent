@@ -54,6 +54,18 @@ export class RoninAgentProvider implements vscode.TreeDataProvider<vscode.TreeIt
         return [
           this.createCommandItem('Sign in to Ronin', 'ronin.login'),
           this.createCommandItem('Open Dashboard Panel', 'ronin.openAgentWebview'),
+          this.createCommandItem('Ask About Selection', 'ronin.askSelection'),
+          this.createActionCommandItem('Explain selected code', 'explain', 'Explain the selected code or the current file in detail.'),
+          this.createActionCommandItem('Fix selected code', 'fix', 'Review and fix the selected code or current file, correcting bugs and improving quality.'),
+          this.createActionCommandItem('Refactor selection', 'refactor', 'Refactor the selected code or current file for readability and maintainability.'),
+          this.createActionCommandItem('Generate tests for selection', 'generate_tests', 'Generate test code for the selected code or current file.'),
+          this.createActionCommandItem('Create a new file from prompt', 'create_file', 'Create a new file according to the following prompt.'),
+          this.createActionCommandItem('Insert snippet into active editor', 'insert_snippet', 'Provide a code snippet suitable for insertion into the active editor.'),
+          this.createActionCommandItem('Replace active editor content', 'replace_content', 'Replace the active editor content with an improved AI-generated version.'),
+          this.createActionCommandItem('Document selected code', 'document', 'Add comments and documentation to the selected code or active file.'),
+          this.createActionCommandItem('Summarize current file', 'summarize', 'Summarize the current file and explain its purpose.'),
+          this.createActionCommandItem('Search workspace and apply changes', 'search_and_apply', 'Find the relevant workspace files and suggest edits across the project.'),
+          this.createActionCommandItem('Open file with Ronin suggestion', 'open_file', 'Identify a workspace file that should be changed and describe the update needed.'),
           this.createCommandItem('Refresh Agent View', 'ronin.refresh')
         ];
       default:
@@ -70,6 +82,16 @@ export class RoninAgentProvider implements vscode.TreeDataProvider<vscode.TreeIt
   createCommandItem(label: string, commandId: string): vscode.TreeItem {
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
     item.command = { command: commandId, title: label };
+    return item;
+  }
+
+  createActionCommandItem(label: string, actionKey: string, prompt: string): vscode.TreeItem {
+    const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
+    item.command = {
+      command: 'ronin.performEditorAction',
+      title: label,
+      arguments: [{ actionKey, prompt }]
+    };
     return item;
   }
 
@@ -107,6 +129,125 @@ export class RoninAgentProvider implements vscode.TreeDataProvider<vscode.TreeIt
       return Array.isArray(messages) ? messages : [];
     } catch (error) {
       return [];
+    }
+  }
+
+  async askSelection(): Promise<void> {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage('Open a file and select text before asking Ronin.');
+      return;
+    }
+
+    const project = await this.pickProjectForSelection();
+    if (!project) {
+      return;
+    }
+
+    const selectedText = editor.document.getText(editor.selection).trim();
+    const filePath = vscode.workspace.asRelativePath(editor.document.uri, false);
+    const prompt = selectedText
+      ? `Review and improve the selected code in ${filePath}:\n\n${selectedText}`
+      : `Review the active file ${filePath} and provide guidance:\n\n${editor.document.getText()}`;
+
+    try {
+      const response = await this.request('/llm/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          projectId: project.id,
+          message: prompt,
+          filePath,
+          activeEditorText: selectedText || editor.document.getText()
+        })
+      });
+
+      const output = vscode.window.createOutputChannel('Ronin AI');
+      output.clear();
+      output.appendLine(`Ronin response for ${filePath}`);
+      output.appendLine('---');
+      output.appendLine(response?.response || 'No response received from Ronin.');
+      output.show(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to ask Ronin about selection.';
+      vscode.window.showErrorMessage(`Ronin selection request failed: ${message}`);
+    }
+  }
+
+  private async pickProjectForSelection(): Promise<any | undefined> {
+    const token = await this.getToken();
+    if (!token) {
+      vscode.window.showWarningMessage('Please sign in to Ronin before using selection-based assistance.');
+      return undefined;
+    }
+
+    const projects = await this.request('/projects');
+    if (!Array.isArray(projects) || projects.length === 0) {
+      vscode.window.showWarningMessage('No Ronin projects are available for workspace assistance.');
+      return undefined;
+    }
+
+    if (projects.length === 1) {
+      return projects[0];
+    }
+
+    const selection = await vscode.window.showQuickPick(
+      projects.map((project: any) => ({
+        label: project.name || `Project #${project.id}`,
+        description: project.status || '',
+        project
+      })),
+      { placeHolder: 'Select a Ronin project to use for this editor selection' }
+    );
+
+    return selection?.project;
+  }
+
+  async performEditorAction(args: any): Promise<void> {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage('Open a file in the editor before running a Ronin editor action.');
+      return;
+    }
+
+    const project = await this.pickProjectForSelection();
+    if (!project) {
+      return;
+    }
+
+    const selectedText = editor.document.getText(editor.selection).trim();
+    const filePath = vscode.workspace.asRelativePath(editor.document.uri, false);
+    const basePrompt = String(args?.prompt || '').trim();
+    const derivedPrompt = basePrompt || `Perform the editor action ${String(args?.actionKey || 'action')} on ${filePath}.`;
+    const message = selectedText
+      ? `${derivedPrompt}\n\nSelected text:\n${selectedText}`
+      : `${derivedPrompt}\n\nActive file: ${filePath}`;
+
+    try {
+      const response = await this.request('/llm/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          projectId: project.id,
+          message,
+          filePath,
+          activeEditorText: selectedText || editor.document.getText()
+        })
+      });
+
+      const output = vscode.window.createOutputChannel('Ronin AI');
+      output.clear();
+      output.appendLine(`Ronin editor action result for ${filePath}`);
+      output.appendLine('---');
+      output.appendLine(response?.response || 'No response received from Ronin.');
+      output.show(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to perform the editor action.';
+      vscode.window.showErrorMessage(`Ronin editor action failed: ${message}`);
     }
   }
 
@@ -190,12 +331,27 @@ export class RoninAgentProvider implements vscode.TreeDataProvider<vscode.TreeIt
             return;
           }
 
+          const actionType = String(event.actionType || 'General').trim();
+          const editor = vscode.window.activeTextEditor;
+          let filePath: string | undefined;
+          let activeEditorText: string | undefined;
+          if (editor) {
+            filePath = vscode.workspace.asRelativePath(editor.document.uri, false);
+            activeEditorText = editor.document.getText(editor.selection).trim() || editor.document.getText();
+          }
+
           const response = await this.request('/llm/chat', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ projectId: project.id, message: text })
+            body: JSON.stringify({
+              projectId: project.id,
+              message: text,
+              actionType,
+              filePath,
+              activeEditorText
+            })
           });
 
           panel.webview.postMessage({
@@ -299,10 +455,23 @@ export class RoninAgentProvider implements vscode.TreeDataProvider<vscode.TreeIt
     <h2>Chat with Ronin</h2>
     <div class="messages" id="messageList">${messageItems || '<p>No conversation yet. Send a message to begin.</p>'}</div>
     <div class="form-row">
-      <label class="label" for="messageInput">Ask Ronin about this project:</label>
-      <textarea id="messageInput" placeholder="Ask Ronin about this project..." aria-label="Ronin chat message"></textarea>
-      <button id="sendChatButton" type="button">Send to Ronin</button>
-    </div>
+        <label class="label" for="actionType">Action type</label>
+        <select id="actionType" class="action-select" aria-label="Ronin action type">
+          <option value="General">General</option>
+          <option value="Explain selected code">Explain selected code</option>
+          <option value="Fix selected code">Fix selected code</option>
+          <option value="Refactor selection">Refactor selection</option>
+          <option value="Generate tests for selection">Generate tests for selection</option>
+          <option value="Create a new file from prompt">Create a new file from prompt</option>
+          <option value="Insert snippet into active editor">Insert snippet into active editor</option>
+          <option value="Replace active editor content">Replace active editor content</option>
+          <option value="Document selected code">Document selected code</option>
+          <option value="Summarize current file">Summarize current file</option>
+          <option value="Search workspace and apply changes">Search workspace and apply changes</option>
+          <option value="Open file with Ronin suggestion">Open file with Ronin suggestion</option>
+        </select>
+      </div>
+      <div class="form-row">
     <div class="status" id="chatStatus"></div>
   </div>
 
@@ -342,6 +511,7 @@ export class RoninAgentProvider implements vscode.TreeDataProvider<vscode.TreeIt
     const fileContentInput = document.getElementById('fileContentInput');
     const filePathInput = document.getElementById('filePathInput');
     const filePathContent = document.getElementById('filePathContent');
+    const actionTypeSelect = document.getElementById('actionType');
 
     function appendMessage(sender, text, meta = '') {
       const container = document.createElement('div');
@@ -371,10 +541,12 @@ export class RoninAgentProvider implements vscode.TreeDataProvider<vscode.TreeIt
       if (!text) {
         return;
       }
-      appendMessage('user', text);
+      const actionType = actionTypeSelect?.value || 'General';
+      const sendText = actionType !== 'General' ? actionType + ':\n\n' + text : text;
+      appendMessage('user', actionType + ' — ' + text);
       messageInput.value = '';
       chatStatus.textContent = 'Sending...';
-      vscode.postMessage({ command: 'sendChat', text });
+      vscode.postMessage({ command: 'sendChat', text: sendText, actionType });
     }
 
     sendChatButton.addEventListener('click', sendChat);

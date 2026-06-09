@@ -196,15 +196,15 @@ if ($LASTEXITCODE -eq 0) {
 # Final status
 Write-Header "Deployment Complete!"
 Write-Host ""
-Write-Host "🔗 Application URLs:" -ForegroundColor Green
+Write-Host "Application URLs:" -ForegroundColor Green
 Write-Host "   Backend:  https://$BackendApp.herokuapp.com" -ForegroundColor Yellow
 Write-Host "   Frontend: https://$FrontendApp.herokuapp.com" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "📊 View Logs:" -ForegroundColor Green
+Write-Host "View Logs:" -ForegroundColor Green
 Write-Host "   heroku logs --app $BackendApp --tail" -ForegroundColor Yellow
 Write-Host "   heroku logs --app $FrontendApp --tail" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "🔄 Next Deploy:" -ForegroundColor Green
+Write-Host "Next Deploy:" -ForegroundColor Green
 Write-Host "   git push heroku-backend main" -ForegroundColor Yellow
 Write-Host "   git push heroku-frontend main" -ForegroundColor Yellow
 Write-Host ""

@@ -12,6 +12,8 @@ export function activate(context: vscode.ExtensionContext) {
     }),
     vscode.commands.registerCommand('ronin.login', () => provider.login()),
     vscode.commands.registerCommand('ronin.openAgentWebview', () => provider.openAgentWebview()),
+    vscode.commands.registerCommand('ronin.askSelection', () => provider.askSelection()),
+    vscode.commands.registerCommand('ronin.performEditorAction', (args) => provider.performEditorAction(args)),
     vscode.commands.registerCommand('ronin.refresh', () => provider.refresh()),
     vscode.commands.registerCommand('ronin.showRank', () => provider.showRank()),
     vscode.commands.registerCommand('ronin.openProject', (project) => provider.openProject(project))

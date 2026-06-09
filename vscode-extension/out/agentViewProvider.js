@@ -469,7 +469,7 @@ class RoninAgentProvider {
     }
     async showRank() {
         try {
-            const profile = await this.request('/auth/me');
+            const profile = await this.request('/users/me');
             if (!profile) {
                 throw new Error('Unable to load authenticated user.');
             }

@@ -27,6 +27,23 @@ git subtree push --prefix frontend heroku-frontend master:main
 
 This pushes only the `frontend/` subtree to the `ronin-frontend` Heroku app.
 
+## 4. Use the helper script
+
+If you prefer an automated helper, run:
+
+```bash
+./deploy-heroku-helper.sh
+```
+
+The helper script will:
+- verify a clean git working tree
+- configure Heroku remotes
+- set `heroku/java` for the backend app
+- set `heroku/nodejs` for the frontend app
+- deploy each subtree with `master:main`
+
+## 5. Verify buildpacks (optional)
+
 ## 4. Verify buildpacks (optional)
 
 If you need to enforce the correct buildpack:

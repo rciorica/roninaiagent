@@ -17,7 +17,8 @@ chmod +x heroku-config.sh
 ### 3. Deploy Applications
 ```bash
 chmod +x deploy-to-heroku.sh
-./deploy-to-heroku.sh
+chmod +x deploy-heroku-helper.sh
+./deploy-heroku-helper.sh
 ```
 
 ### 4. Verify Deployment

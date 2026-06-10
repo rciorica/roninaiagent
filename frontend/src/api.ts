@@ -27,6 +27,7 @@ type LLMChatRequest = {
   projectId: number;
   message: string;
   actionType?: string;
+  urls?: string[];
 };
 
 type LLMChatEditInstruction = {

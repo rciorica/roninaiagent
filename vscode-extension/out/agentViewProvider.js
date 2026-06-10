@@ -520,27 +520,8 @@ class RoninAgentProvider {
         return;
       }
       const actionType = actionTypeSelect?.value || 'General';
-      const sendText = actionType !== 'General' ? `;
-        $;
-        {
-            actionType;
-        }
-        n;
-        n$;
-        {
-            text;
-        }
-        ` : text;
-      appendMessage('user', `;
-        $;
-        {
-            actionType;
-        }
-        $;
-        {
-            text;
-        }
-        `);
+      const sendText = actionType !== 'General' ? actionType + ':\n\n' + text : text;
+      appendMessage('user', actionType + ' — ' + text);
       messageInput.value = '';
       chatStatus.textContent = 'Sending...';
       vscode.postMessage({ command: 'sendChat', text: sendText, actionType });

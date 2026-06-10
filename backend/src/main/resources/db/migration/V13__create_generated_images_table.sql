@@ -1,3 +1,7 @@
+-- Generated Images table for storing AI-generated images
+-- This must be run after the projects and users tables exist
+DROP TABLE IF EXISTS generated_images CASCADE;
+
 CREATE TABLE generated_images (
     id BIGSERIAL PRIMARY KEY,
     project_id BIGINT NOT NULL,

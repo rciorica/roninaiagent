@@ -3,7 +3,7 @@
   "displayName": "Ronin AI Agent",
   "publisher": "rcioricaronin",
   "icon": "icon.png",
-  "version": "0.1.9",
+  "version": "0.2.1",
   "description": "VS Code extension for the Ronin AI Agent.",
   "license": "MIT",
   "repository": {

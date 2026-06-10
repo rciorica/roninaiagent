@@ -32,11 +32,11 @@ public class WebClientConfig {
                         .port(proxySettings.port);
 
                 if (StringUtils.hasText(proxyUser) && StringUtils.hasText(proxyPassword)) {
-                    proxy.username(usernameSpec -> usernameSpec.setUsername(proxyUser))
-                            .password(passwordSpec -> passwordSpec.setPassword(proxyPassword));
+                    proxy.username(proxyUser)
+                            .password(proxyPassword);
                 } else if (StringUtils.hasText(proxySettings.username) && StringUtils.hasText(proxySettings.password)) {
-                    proxy.username(usernameSpec -> usernameSpec.setUsername(proxySettings.username))
-                            .password(passwordSpec -> passwordSpec.setPassword(proxySettings.password));
+                    proxy.username(proxySettings.username)
+                            .password(proxySettings.password);
                 }
             });
         }

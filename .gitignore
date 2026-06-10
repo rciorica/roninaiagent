@@ -21,6 +21,7 @@ target/
 dist/
 build/
 *.class
+backend/cp.txt
 
 # Logs
 *.log

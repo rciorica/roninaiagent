@@ -184,8 +184,8 @@ public class ImageGenerationService {
 
         ImageGenerationResult result = switch (selectedProvider.toLowerCase()) {
             case "dall-e", "openai" -> generateImageDallE(prompt, size, quality);
-            case "stable-diffusion", "openrouter" -> generateImageStableDiffusion(prompt, model, size);
-            default -> throw new IllegalArgumentException("Unsupported image generation provider: " + selectedProvider);
+            // Note: OpenRouter image generation is not currently supported
+            default -> throw new IllegalArgumentException("Unsupported image generation provider: " + selectedProvider + ". Only DALL-E (OpenAI) is currently supported.");
         };
 
         // Save generated image to database
@@ -220,12 +220,11 @@ public class ImageGenerationService {
     }
 
     private String determineAvailableProvider() {
+        // Prefer DALL-E (OpenRouter image generation endpoint is not available)
         if (openAiApiKey != null && !openAiApiKey.isBlank()) {
             return "dall-e";
-        } else if (openRouterApiKey != null && !openRouterApiKey.isBlank()) {
-            return "openrouter";
         } else {
-            throw new IllegalStateException("No image generation API keys configured. Set OPENAI_API_KEY or OPENROUTER_API_KEY.");
+            throw new IllegalStateException("No image generation API keys configured. Set OPENAI_API_KEY for DALL-E image generation.");
         }
     }
 

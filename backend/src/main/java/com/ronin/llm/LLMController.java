@@ -69,17 +69,6 @@ public class LLMController {
                                 "description", "High-quality image generation from OpenAI",
                                 "models", List.of("dall-e-3"),
                                 "sizes", List.of("1024x1024", "1792x1024", "1024x1792")
-                        ),
-                        Map.of(
-                                "name", "openrouter",
-                                "displayName", "Stable Diffusion (OpenRouter)",
-                                "description", "Fast and efficient image generation via Stable Diffusion",
-                                "models", List.of(
-                                        "stabilityai/stable-diffusion-3",
-                                        "stabilityai/stable-diffusion-3-large",
-                                        "stabilityai/stable-diffusion-3-turbo"
-                                ),
-                                "sizes", List.of("1024x1024", "768x768", "512x512")
                         )
                 )
         );

@@ -54,8 +54,8 @@ Write-Success "Git remotes configured"
 
 # Deploy Backend using git subtree
 Write-Header "Deploying Backend to $BackendApp"
-Write-Host "Running: git subtree push --prefix backend heroku-backend main"
-& "C:\Program Files\Git\bin\git.exe" subtree push --prefix backend heroku-backend main
+Write-Host "Running: git subtree push --prefix backend heroku-backend master:main"
+& "C:\Program Files\Git\bin\git.exe" subtree push --prefix backend heroku-backend master:main
 if ($LASTEXITCODE -eq 0) {
     Write-Success "Backend deployed successfully"
 } else {
@@ -67,8 +67,8 @@ if ($LASTEXITCODE -eq 0) {
 
 # Deploy Frontend using git subtree
 Write-Header "Deploying Frontend to $FrontendApp"
-Write-Host "Running: git subtree push --prefix frontend heroku-frontend main"
-& "C:\Program Files\Git\bin\git.exe" subtree push --prefix frontend heroku-frontend main
+Write-Host "Running: git subtree push --prefix frontend heroku-frontend master:main"
+& "C:\Program Files\Git\bin\git.exe" subtree push --prefix frontend heroku-frontend master:main
 if ($LASTEXITCODE -eq 0) {
     Write-Success "Frontend deployed successfully"
 } else {

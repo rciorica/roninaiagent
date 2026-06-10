@@ -35,8 +35,8 @@ Successfully deployed both the frontend and backend applications to Heroku!
 ### Deployment Method
 
 Used **git subtree push** for monorepo structure:
-- Backend: `git subtree push --prefix backend heroku-backend main`
-- Frontend: `git subtree push --prefix frontend heroku-frontend main`
+- Backend: `git subtree push --prefix backend heroku-backend master:main`
+- Frontend: `git subtree push --prefix frontend heroku-frontend master:main`
 
 ### Next Steps
 

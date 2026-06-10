@@ -31,8 +31,8 @@ echo "  Frontend: $FRONTEND_APP"
 echo ""
 
 # Deploy
-git push heroku-backend main
-git push heroku-frontend main
+git subtree push --prefix backend heroku-backend master:main
+git subtree push --prefix frontend heroku-frontend master:main
 
 echo ""
 echo "✅ Deployed!"

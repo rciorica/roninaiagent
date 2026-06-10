@@ -153,8 +153,8 @@ Write-Success "Git remotes configured"
 
 # Deploy Backend
 Write-Header "Deploying Backend to $BackendApp"
-Write-Host "Running: git push heroku-backend main"
-& "C:\Program Files\Git\bin\git.exe" push heroku-backend main
+Write-Host "Running: git subtree push --prefix backend heroku-backend master:main"
+& "C:\Program Files\Git\bin\git.exe" subtree push --prefix backend heroku-backend master:main
 if ($LASTEXITCODE -eq 0) {
     Write-Success "Backend deployed successfully"
 } else {
@@ -164,8 +164,8 @@ if ($LASTEXITCODE -eq 0) {
 
 # Deploy Frontend
 Write-Header "Deploying Frontend to $FrontendApp"
-Write-Host "Running: git push heroku-frontend main"
-& "C:\Program Files\Git\bin\git.exe" push heroku-frontend main
+Write-Host "Running: git subtree push --prefix frontend heroku-frontend master:main"
+& "C:\Program Files\Git\bin\git.exe" subtree push --prefix frontend heroku-frontend master:main
 if ($LASTEXITCODE -eq 0) {
     Write-Success "Frontend deployed successfully"
 } else {
@@ -185,6 +185,6 @@ Write-Host "   Backend:  heroku logs --app $BackendApp --tail" -ForegroundColor 
 Write-Host "   Frontend: heroku logs --app $FrontendApp --tail" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Next Deploy:" -ForegroundColor Green
-Write-Host "   git push heroku-backend main" -ForegroundColor Yellow
-Write-Host "   git push heroku-frontend main" -ForegroundColor Yellow
+Write-Host "   git subtree push --prefix backend heroku-backend master:main" -ForegroundColor Yellow
+Write-Host "   git subtree push --prefix frontend heroku-frontend master:main" -ForegroundColor Yellow
 Write-Host ""

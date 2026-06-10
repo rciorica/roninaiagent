@@ -54,12 +54,12 @@ fi
 # Deploy backend
 echo ""
 echo "📦 Deploying backend to $BACKEND_APP..."
-git push heroku-backend main 2>&1 | tail -20
+git subtree push --prefix backend heroku-backend master:main 2>&1 | tail -20
 
 # Deploy frontend
 echo ""
 echo "📦 Deploying frontend to $FRONTEND_APP..."
-git push heroku-frontend main 2>&1 | tail -20
+git subtree push --prefix frontend heroku-frontend master:main 2>&1 | tail -20
 
 echo ""
 echo "✅ Deployment complete!"

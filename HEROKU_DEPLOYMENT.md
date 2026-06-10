@@ -74,8 +74,8 @@ git remote add heroku-frontend https://git.heroku.com/ronin-frontend.git
 
 ### Step 5: Deploy
 ```bash
-git push heroku-backend main
-git push heroku-frontend main
+git subtree push --prefix backend heroku-backend master:main
+git subtree push --prefix frontend heroku-frontend master:main
 ```
 
 ---
@@ -139,7 +139,7 @@ heroku logs --app ronin-frontend
 
 # Rebuild
 heroku builds:cancel --app ronin-backend
-git push heroku-backend main
+git subtree push --prefix backend heroku-backend master:main
 ```
 
 ### Database Connection Issues
@@ -172,6 +172,6 @@ For subsequent deployments, just commit your changes and run:
 
 Or manually:
 ```bash
-git push heroku-backend main
-git push heroku-frontend main
+git subtree push --prefix backend heroku-backend master:main
+git subtree push --prefix frontend heroku-frontend master:main
 ```

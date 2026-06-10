@@ -24,6 +24,11 @@ public class OpenRouterClient {
                             @Value("${openrouter.api.key:}") String apiKey,
                             @Value("${openrouter.api.url:https://openrouter.ai/api/v1}") String apiUrl) {
         this.webClientBuilder = webClientBuilder;
+        
+        // Log for debugging
+        log.info("OpenRouterClient initialized with apiUrl: {}", apiUrl);
+        log.info("OpenRouter API key configured: {}", StringUtils.hasText(apiKey));
+        
         if (!StringUtils.hasText(apiKey)) {
             log.warn("OpenRouter API key is not configured. Set OPENROUTER_API_KEY environment variable for project generation to work.");
         }
@@ -32,6 +37,7 @@ public class OpenRouterClient {
     }
 
     public OpenRouterResult generate(String model, String prompt) {
+        log.debug("Generating response for model: {}", model);
         return callOpenRouter(apiUrl, resolveOpenRouterModel(model), prompt, false);
     }
 
@@ -65,6 +71,9 @@ public class OpenRouterClient {
     }
 
     private OpenRouterResult callOpenRouter(String baseUrl, String model, String prompt, boolean fallbackAttempted) {
+        log.debug("Calling OpenRouter API with model: {}, apiKey present: {}, baseUrl: {}", 
+                  model, StringUtils.hasText(apiKey), baseUrl);
+        
         WebClient client = webClientBuilder
                 .baseUrl(baseUrl)
                 .defaultHeader("Authorization", "Bearer " + apiKey)
@@ -74,6 +83,8 @@ public class OpenRouterClient {
         try {
             String responseJson = client.post()
                     .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)  // Explicit header to ensure it's set
+                    .header("Content-Type", "application/json")
                     .bodyValue(Map.of(
                             "model", model,
                             "messages", List.of(Map.of("role", "user", "content", prompt))
@@ -113,6 +124,7 @@ public class OpenRouterClient {
         } catch (WebClientResponseException e) {
             String body = e.getResponseBodyAsString();
             log.error("OpenRouter returned HTTP {}: {}", e.getRawStatusCode(), body);
+            log.error("Request headers in error case - Authorization header was included in request");
             if (!fallbackAttempted && ((e.getRawStatusCode() == 400 && body != null && (body.contains("not a valid model ID") || body.contains("invalid request error")))
                     || (e.getRawStatusCode() == 404 && body != null && body.contains("No endpoints found")))) {
                 String fallbackModel = resolveFallbackModel(model);

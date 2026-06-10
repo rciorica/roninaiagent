@@ -21,26 +21,53 @@ public class OpenRouterClient {
     private final String apiUrl;
 
     public OpenRouterClient(WebClient.Builder webClientBuilder,
-                            @Value("${openrouter.api.key:}") String apiKey,
+                            @Value("${OPENROUTER_API_KEY:#{null}}") String envApiKey,
+                            @Value("${openrouter.api.key:#{null}}") String propApiKey,
                             @Value("${openrouter.api.url:https://openrouter.ai/api/v1}") String apiUrl) {
         this.webClientBuilder = webClientBuilder;
         
-        // Fallback to environment variable if property not set
-        String finalKey = apiKey;
-        if (!StringUtils.hasText(finalKey)) {
-            finalKey = System.getenv("OPENROUTER_API_KEY");
-            log.info("OpenRouter API key loaded from OPENROUTER_API_KEY environment variable");
+        // Try multiple sources in order of preference
+        String finalKey = null;
+        String source = "none";
+        
+        // 1. Try environment variable directly via Spring
+        if (StringUtils.hasText(envApiKey)) {
+            finalKey = envApiKey;
+            source = "OPENROUTER_API_KEY env var (Spring)";
+        }
+        // 2. Try property binding
+        else if (StringUtils.hasText(propApiKey)) {
+            finalKey = propApiKey;
+            source = "openrouter.api.key property";
+        }
+        // 3. Fallback to System.getenv()
+        else {
+            String sysEnvKey = System.getenv("OPENROUTER_API_KEY");
+            if (StringUtils.hasText(sysEnvKey)) {
+                finalKey = sysEnvKey;
+                source = "System.getenv(OPENROUTER_API_KEY)";
+            }
         }
         
-        log.info("OpenRouterClient initialized");
-        log.info("  URL: {}", apiUrl);
-        log.info("  API Key configured: {}", StringUtils.hasText(finalKey));
+        log.info("===== OpenRouterClient Initialization =====");
+        log.info("API URL: {}", apiUrl);
+        log.info("API Key Source: {}", source);
+        log.info("API Key Present: {}", StringUtils.hasText(finalKey));
+        if (StringUtils.hasText(finalKey)) {
+            log.info("API Key Length: {} chars", finalKey.length());
+            log.info("API Key Starts With: {}", finalKey.substring(0, Math.min(20, finalKey.length())));
+        }
+        log.info("=========================================");
         
         if (!StringUtils.hasText(finalKey)) {
-            log.warn("OpenRouter API key is not configured. Set OPENROUTER_API_KEY environment variable for project generation to work.");
+            log.error("CRITICAL: OpenRouter API key not found in any source!");
+            log.error("  - Not found in OPENROUTER_API_KEY environment variable");
+            log.error("  - Not found in openrouter.api.key property");
+            log.error("  - Not found in System.getenv()");
+            log.error("Please set OPENROUTER_API_KEY environment variable");
         }
         
-        this.apiKey = finalKey;
+        this.apiKey = finalKey != null ? finalKey : "";
         this.apiUrl = apiUrl;
     }
 
@@ -80,11 +107,17 @@ public class OpenRouterClient {
 
     private OpenRouterResult callOpenRouter(String baseUrl, String model, String prompt, boolean fallbackAttempted) {
         if (!StringUtils.hasText(apiKey)) {
-            log.error("Cannot call OpenRouter: API key is empty. Please set OPENROUTER_API_KEY environment variable.");
+            log.error("CRITICAL: Cannot call OpenRouter - API key is empty!");
+            log.error("Ensure OPENROUTER_API_KEY environment variable is set on Heroku:");
+            log.error("  heroku config:set OPENROUTER_API_KEY=sk-or-... --app ronin-backend");
             throw new RuntimeException("OpenRouter API key not configured");
         }
         
-        log.debug("Calling OpenRouter: model={}, apiKeyLength={}", model, apiKey.length());
+        log.debug("Calling OpenRouter API");
+        log.debug("  URL: {}", baseUrl);
+        log.debug("  Model: {}", model);
+        log.debug("  API Key Length: {}", apiKey.length());
+        log.debug("  Authorization Header: Bearer {}", apiKey.substring(0, Math.min(15, apiKey.length())) + "...");
         
         String authHeader = "Bearer " + apiKey;
         
@@ -93,6 +126,7 @@ public class OpenRouterClient {
                 .build();
 
         try {
+            log.debug("Sending POST request to /chat/completions");
             String responseJson = client.post()
                     .uri("/chat/completions")
                     .header("Authorization", authHeader)
@@ -114,7 +148,7 @@ public class OpenRouterClient {
 
             if (response.getError() != null) {
                 String errorMsg = response.getError().getMessage();
-                log.error("OpenRouter API error response: {}", errorMsg);
+                log.error("OpenRouter API returned error: {}", errorMsg);
                 throw new RuntimeException("OpenRouter API error: " + errorMsg);
             }
 
@@ -132,13 +166,24 @@ public class OpenRouterClient {
                 totalTokens = response.getUsage().getPromptTokens() + response.getUsage().getCompletionTokens();
             }
 
+            log.debug("OpenRouter call successful: {} tokens used", totalTokens);
             return new OpenRouterResult(content, totalTokens);
         } catch (WebClientResponseException e) {
             String body = e.getResponseBodyAsString();
-            log.error("OpenRouter API returned HTTP {}: {}", e.getRawStatusCode(), body);
+            log.error("OpenRouter API returned HTTP {}", e.getRawStatusCode());
+            log.error("Response body: {}", body);
             
             if (e.getRawStatusCode() == 401) {
-                log.error("AUTHENTICATION ERROR - verify OPENROUTER_API_KEY is set correctly");
+                log.error("========== AUTHENTICATION FAILURE ==========");
+                log.error("API returned 401 Unauthorized");
+                log.error("API Key Length: {}", apiKey.length());
+                log.error("API Key Preview: {}", apiKey.substring(0, Math.min(15, apiKey.length())) + "...");
+                log.error("Verify:");
+                log.error("  1. OPENROUTER_API_KEY is set on Heroku");
+                log.error("  2. API Key is valid and not expired");
+                log.error("  3. API Key has required permissions");
+                log.error("Response: {}", body);
+                log.error("==========================================");
             }
             
             if (!fallbackAttempted && ((e.getRawStatusCode() == 400 && body != null && (body.contains("not a valid model ID") || body.contains("invalid request error")))
@@ -151,7 +196,7 @@ public class OpenRouterClient {
             }
             throw new RuntimeException("OpenRouter API returned " + e.getRawStatusCode() + ": " + body, e);
         } catch (Exception e) {
-            log.error("Error calling OpenRouter API", e);
+            log.error("Error calling OpenRouter API: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to call OpenRouter API: " + e.getMessage(), e);
         }
     }

@@ -14,7 +14,7 @@ public class OpenRouterConfig {
 
 @ConfigurationProperties(prefix = "openrouter.api")
 @Slf4j
-class OpenRouterProperties {
+public class OpenRouterProperties {
     private String key;
     private String url = "https://openrouter.ai/api/v1";
 

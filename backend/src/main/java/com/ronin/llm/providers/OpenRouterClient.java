@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -23,6 +24,9 @@ public class OpenRouterClient {
                             @Value("${openrouter.api.key}") String apiKey,
                             @Value("${openrouter.api.url:https://openrouter.ai/api/v1}") String apiUrl) {
         this.webClientBuilder = webClientBuilder;
+        if (!StringUtils.hasText(apiKey)) {
+            throw new IllegalStateException("OpenRouter API key is not configured. Set OPENROUTER_API_KEY in the environment or openrouter.api.key in properties.");
+        }
         this.apiKey = apiKey;
         this.apiUrl = apiUrl;
     }

@@ -198,12 +198,34 @@ The application reads configuration from environment variables with fallbacks to
 | `SPRING_DATASOURCE_USERNAME` | DB user | `postgres` |
 | `SPRING_DATASOURCE_PASSWORD` | DB password | `secure-password` |
 | `OPENROUTER_API_KEY` | OpenRouter API key for LLM calls | (from OpenRouter dashboard) |
+| `HTTP_PROXY` / `HTTPS_PROXY` | Optional outbound proxy URL in the form `http://proxy.example.com:3128` or `http://user:pass@proxy.example.com:3128` | Use when your environment requires a proxy for internet access |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID | (from Google Cloud Console) |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | (from Google Cloud Console) |
 | `FRONTEND_OAUTH_SUCCESS_URL` | Frontend URL after OAuth login | `https://app.example.com/` |
 | `GOOGLE_REDIRECT_URI` | OAuth callback URL | `https://api.example.com/auth/oauth2/callback/google` |
 
 **Never commit API keys or passwords to the repository.** Use environment variables in production.
+
+### Starting locally behind a proxy
+
+Windows PowerShell:
+```powershell
+$env:OPENROUTER_API_KEY = "<your-openrouter-api-key>"
+$env:HTTPS_PROXY = "http://proxy.example.com:3128"
+$env:HTTP_PROXY = "http://proxy.example.com:3128"
+.\mvnw spring-boot:run
+```
+
+Windows cmd.exe:
+```cmd
+set OPENROUTER_API_KEY=<your-openrouter-api-key>
+set HTTPS_PROXY=http://proxy.example.com:3128
+set HTTP_PROXY=http://proxy.example.com:3128
+.\mvnw spring-boot:run
+```
+
+If your proxy requires authentication, include credentials in the URL:
+`http://user:password@proxy.example.com:3128`
 
 ## Architecture
 

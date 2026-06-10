@@ -133,8 +133,14 @@ public class LLMService {
 
         boolean editsApplied = false;
         int appliedEditCount = 0;
+        String editPayload = null;
+        List<LLMEditInstruction> edits = List.of();
         try {
-            List<LLMEditInstruction> edits = parseEditsFromResponse(llmOutput);
+            Matcher matcher = JSON_ARRAY_PATTERN.matcher(llmOutput);
+            if (matcher.find()) {
+                editPayload = matcher.group();
+            }
+            edits = parseEditsFromResponse(llmOutput);
             if (!edits.isEmpty()) {
                 appliedEditCount = applyEdits(project.getId(), edits);
                 editsApplied = appliedEditCount > 0;
@@ -154,7 +160,9 @@ public class LLMService {
                 chosen.getName(),
                 sel.switched(),
                 preferred.getName(),
-                editsApplied
+                editsApplied,
+                editPayload,
+                edits
         );
     }
     private List<LLMEditInstruction> parseEditsFromResponse(String llmOutput) {

@@ -34,6 +34,8 @@ public class LLMService {
     private final ProjectMessageRepository messageRepository;
     private final CurrentUserService currentUserService;
     private final LLMAgentRegistry llmAgentRegistry;
+    private final WebPageService webPageService;
+    private final WebSearchService webSearchService;
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Pattern JSON_ARRAY_PATTERN = Pattern.compile("\\[[\\s\\S]*?\\]");
@@ -108,6 +110,46 @@ public class LLMService {
             }
         } catch (Exception e) {
             log.warn("Failed to include project files/attachments in prompt: {}", e.getMessage());
+        }
+
+        // include any web pages referenced by the user so the LLM can answer from online content
+        List<String> externalUrls = webPageService.extractUrls(req.message());
+        if (req.urls() != null) {
+            externalUrls.addAll(req.urls());
+        }
+        externalUrls = externalUrls.stream()
+                .filter(url -> url != null && !url.isBlank())
+                .distinct()
+                .limit(3)
+                .toList();
+
+        if (!externalUrls.isEmpty()) {
+            List<FetchedPage> fetchedPages = webPageService.fetchUrls(externalUrls);
+            if (!fetchedPages.isEmpty()) {
+                promptBuilder.append("EXTERNAL ONLINE CONTENT:\n");
+                for (FetchedPage page : fetchedPages) {
+                    promptBuilder.append("URL: ").append(page.url()).append("\n");
+                    promptBuilder.append(page.text()).append("\n\n---\n\n");
+                }
+            }
+        }
+
+        Optional<String> searchQuery = webSearchService.extractSearchQuery(req.message());
+        if (searchQuery.isPresent()) {
+            Optional<SearchResult> searchResult = webSearchService.search(searchQuery.get());
+            if (searchResult.isPresent()) {
+                promptBuilder.append("WEB SEARCH RESULTS FOR: ").append(searchResult.get().query()).append("\n");
+                for (SearchSnippet snippet : searchResult.get().snippets()) {
+                    promptBuilder.append("- ").append(snippet.title()).append("\n");
+                    if (!snippet.url().isBlank()) {
+                        promptBuilder.append("  URL: ").append(snippet.url()).append("\n");
+                    }
+                    if (!snippet.description().isBlank()) {
+                        promptBuilder.append("  ").append(snippet.description()).append("\n");
+                    }
+                }
+                promptBuilder.append("\n");
+            }
         }
 
         // append user request at the end so the LLM knows what to perform

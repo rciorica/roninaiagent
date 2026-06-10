@@ -43,13 +43,24 @@ read -p "Enter Google OAuth Client ID: " GOOGLE_ID
 read -sp "Enter Google OAuth Client Secret: " GOOGLE_SECRET
 echo ""
 
-heroku config:set \
+BACKEND_URL=$(heroku apps:info --app "$BACKEND_APP" --json | tr -d '\r\n' | sed -n 's/.*"web_url"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+FRONTEND_URL=$(heroku apps:info --app "$FRONTEND_APP" --json | tr -d '\r\n' | sed -n 's/.*"web_url"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+
+if [ -z "$BACKEND_URL" ] || [ -z "$FRONTEND_URL" ]; then
+  echo "❌ Failed to resolve Heroku app URLs. Please ensure both apps exist."
+  exit 1
+fi
+
+echo "Backend URL: $BACKEND_URL"
+echo "Frontend URL: $FRONTEND_URL"
+
+eroku config:set \
   OPENROUTER_API_KEY="$OPENROUTER_KEY" \
   GOOGLE_CLIENT_ID="$GOOGLE_ID" \
   GOOGLE_CLIENT_SECRET="$GOOGLE_SECRET" \
-  GOOGLE_REDIRECT_URI="https://$BACKEND_APP.herokuapp.com/auth/oauth2/callback/google" \
-  FRONTEND_OAUTH_SUCCESS_URL="https://$FRONTEND_APP.herokuapp.com/" \
-  CORS_ALLOWED_ORIGINS="https://$FRONTEND_APP.herokuapp.com" \
+  GOOGLE_REDIRECT_URI="$BACKEND_URL/auth/oauth2/callback/google" \
+  FRONTEND_OAUTH_SUCCESS_URL="$FRONTEND_URL/" \
+  CORS_ALLOWED_ORIGINS="$FRONTEND_URL" \
   --app "$BACKEND_APP"
 
 echo ""

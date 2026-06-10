@@ -126,6 +126,15 @@ if ($dbUrl) {
     Write-Host "Database URL not yet available (may take a moment)" -ForegroundColor Yellow
 }
 
+# Retrieve actual Heroku app URLs
+Write-Header "Retrieving actual Heroku app URLs"
+$backendInfoJson = heroku apps:info --json --app $BackendApp
+$backendUrl = (ConvertFrom-Json $backendInfoJson).web_url.TrimEnd('/')
+$frontendInfoJson = heroku apps:info --json --app $FrontendApp
+$frontendUrl = (ConvertFrom-Json $frontendInfoJson).web_url.TrimEnd('/')
+Write-Success "Backend URL: $backendUrl"
+Write-Success "Frontend URL: $frontendUrl"
+
 # Configure Backend Environment Variables
 Write-Header "Configuring Backend Environment Variables"
 
@@ -134,9 +143,9 @@ $googleId = Read-Host "Enter Google OAuth Client ID (or press Enter to skip)"
 $googleSecret = Read-Host "Enter Google OAuth Client Secret (or press Enter to skip)"
 
 $configVars = @{
-    "GOOGLE_REDIRECT_URI" = "https://$BackendApp.herokuapp.com/auth/oauth2/callback/google"
-    "FRONTEND_OAUTH_SUCCESS_URL" = "https://$FrontendApp.herokuapp.com/"
-    "CORS_ALLOWED_ORIGINS" = "https://$FrontendApp.herokuapp.com"
+    "GOOGLE_REDIRECT_URI" = "$backendUrl/auth/oauth2/callback/google"
+    "FRONTEND_OAUTH_SUCCESS_URL" = "$frontendUrl/"
+    "CORS_ALLOWED_ORIGINS" = "$frontendUrl"
 }
 
 if ($openrouterKey) {
@@ -162,7 +171,7 @@ Write-Success "Backend environment variables configured"
 
 # Configure Frontend Environment Variables
 Write-Header "Configuring Frontend Environment Variables"
-heroku config:set VITE_API_URL="https://$BackendApp.herokuapp.com" --app $FrontendApp
+heroku config:set VITE_API_URL="$backendUrl" --app $FrontendApp
 Write-Success "Frontend environment variables configured"
 
 # Add git remotes

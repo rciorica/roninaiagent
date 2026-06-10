@@ -119,6 +119,13 @@ $googleSecret = Read-Host "Enter Google OAuth Client Secret (or press Enter to s
 Write-Host ""
 Write-Host "Setting backend config variables..." -ForegroundColor Yellow
 
+$backendInfoJson = & "C:\Program Files\heroku\bin\heroku.cmd" apps:info --json --app $BackendApp
+$backendUrl = (ConvertFrom-Json $backendInfoJson).web_url.TrimEnd('/')
+$frontendInfoJson = & "C:\Program Files\heroku\bin\heroku.cmd" apps:info --json --app $FrontendApp
+$frontendUrl = (ConvertFrom-Json $frontendInfoJson).web_url.TrimEnd('/')
+Write-Host "Backend URL: $backendUrl" -ForegroundColor Green
+Write-Host "Frontend URL: $frontendUrl" -ForegroundColor Green
+
 if ($openrouterKey) {
     & "C:\Program Files\heroku\bin\heroku.cmd" config:set OPENROUTER_API_KEY=$openrouterKey --app $BackendApp | Out-Null
 }
@@ -130,17 +137,17 @@ if ($googleSecret) {
 }
 
 & "C:\Program Files\heroku\bin\heroku.cmd" config:set `
-    GOOGLE_REDIRECT_URI="https://$BackendApp.herokuapp.com/auth/oauth2/callback/google" `
-    FRONTEND_OAUTH_SUCCESS_URL="https://$FrontendApp.herokuapp.com/" `
-    CORS_ALLOWED_ORIGINS="https://$FrontendApp.herokuapp.com" `
+    GOOGLE_REDIRECT_URI="$backendUrl/auth/oauth2/callback/google" `
+    FRONTEND_OAUTH_SUCCESS_URL="$frontendUrl/" `
+    CORS_ALLOWED_ORIGINS="$frontendUrl" `
     --app $BackendApp | Out-Null
 
 Write-Success "Backend environment variables configured"
 
 # Configure Frontend Environment Variables
 Write-Header "Configuring Frontend Environment Variables"
-Write-Host "Running: heroku config:set VITE_API_URL=https://$BackendApp.herokuapp.com --app $FrontendApp"
-& "C:\Program Files\heroku\bin\heroku.cmd" config:set VITE_API_URL="https://$BackendApp.herokuapp.com" --app $FrontendApp | Out-Null
+Write-Host "Running: heroku config:set VITE_API_URL=$backendUrl --app $FrontendApp"
+& "C:\Program Files\heroku\bin\heroku.cmd" config:set VITE_API_URL="$backendUrl" --app $FrontendApp | Out-Null
 Write-Success "Frontend environment variables configured"
 
 # Add git remotes

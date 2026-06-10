@@ -1,9 +1,13 @@
-// Get API base URL from environment variable (Heroku) or use relative path (local)
-// In production: VITE_API_URL is set to the backend URL
-// In development: Use relative paths (Vite proxy handles routing to backend)
+// Get API base URL from environment variable (Heroku) or use a safe default.
+// In production: VITE_API_URL is set to the backend URL.
+// In development: Use relative paths (Vite proxy handles routing to backend).
 const API_BASE_URL = import.meta.env.VITE_API_URL || (
-  typeof window !== 'undefined' && window.location.protocol === 'file:'
-    ? 'https://ronin-backend-d8bbbbb0386c.herokuapp.com'
+  typeof window !== 'undefined'
+    ? window.location.protocol === 'file:'
+      ? 'https://ronin-backend-d8bbbbb0386c.herokuapp.com'
+      : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? ''
+        : 'https://ronin-backend-d8bbbbb0386c.herokuapp.com'
     : ''
 );
 

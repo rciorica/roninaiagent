@@ -9,7 +9,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.ProxyProvider;
 
+import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.function.Consumer;
 
 @Configuration
 public class WebClientConfig {
@@ -32,11 +34,9 @@ public class WebClientConfig {
                         .port(proxySettings.port);
 
                 if (StringUtils.hasText(proxyUser) && StringUtils.hasText(proxyPassword)) {
-                    proxy.username(proxyUser)
-                            .password(proxyPassword);
+                    configureProxyAuthentication(proxy, proxyUser, proxyPassword);
                 } else if (StringUtils.hasText(proxySettings.username) && StringUtils.hasText(proxySettings.password)) {
-                    proxy.username(proxySettings.username)
-                            .password(proxySettings.password);
+                    configureProxyAuthentication(proxy, proxySettings.username, proxySettings.password);
                 }
             });
         }
@@ -87,6 +87,34 @@ public class WebClientConfig {
 
     private int resolvePort(int port) {
         return port > 0 ? port : 8080;
+    }
+
+    private void configureProxyAuthentication(ProxyProvider.TypeSpec proxy, String username, String password) {
+        try {
+            Method usernameMethod = proxy.getClass().getMethod("username", String.class);
+            Method passwordMethod = proxy.getClass().getMethod("password", String.class);
+            usernameMethod.invoke(proxy, username);
+            passwordMethod.invoke(proxy, password);
+            return;
+        } catch (ReflectiveOperationException ignored) {
+            // Fallback to alternate proxy auth API if available
+        }
+
+        try {
+            Method authMethod = proxy.getClass().getMethod("auth", Consumer.class);
+            authMethod.invoke(proxy, (Consumer<Object>) authSpec -> {
+                try {
+                    Method usernameMethod = authSpec.getClass().getMethod("username", String.class);
+                    Method passwordMethod = authSpec.getClass().getMethod("password", String.class);
+                    usernameMethod.invoke(authSpec, username);
+                    passwordMethod.invoke(authSpec, password);
+                } catch (ReflectiveOperationException e) {
+                    throw new IllegalStateException("Unable to set proxy credentials", e);
+                }
+            });
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to configure proxy authentication", e);
+        }
     }
 
     private String firstNonEmpty(String... values) {

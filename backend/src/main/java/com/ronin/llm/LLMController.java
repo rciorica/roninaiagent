@@ -1,12 +1,14 @@
 package com.ronin.llm;
 
-import com.ronin.llm.LLMAgentRegistry;
 import com.ronin.llm.dto.ChatRequest;
 import com.ronin.llm.dto.ChatResponse;
+import com.ronin.llm.dto.ImageGenerationRequest;
+import com.ronin.llm.dto.ImageGenerationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/llm")
@@ -15,6 +17,7 @@ public class LLMController {
 
     private final LLMService llmService;
     private final LLMAgentRegistry llmAgentRegistry;
+    private final ImageGenerationService imageGenerationService;
 
     @PostMapping("/chat")
     public ChatResponse chat(@RequestBody ChatRequest req) {
@@ -24,5 +27,61 @@ public class LLMController {
     @GetMapping("/agents")
     public List<String> getLLMAgents() {
         return llmAgentRegistry.getAgentNames();
+    }
+
+    @PostMapping("/generate-image")
+    public ImageGenerationResponse generateImage(@RequestBody ImageGenerationRequest req) {
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            ImageGenerationService.ImageGenerationResult result = imageGenerationService.generateImage(
+                    req.prompt(),
+                    req.provider(),
+                    req.model(),
+                    req.size() != null ? req.size() : "1024x1024",
+                    req.quality(),
+                    req.projectId()
+            );
+
+            long generationTime = System.currentTimeMillis() - startTime;
+
+            return new ImageGenerationResponse(
+                    result.imageUrl(),
+                    result.provider(),
+                    result.prompt(),
+                    result.revisedPrompt(),
+                    result.format(),
+                    generationTime
+            );
+        } catch (Exception e) {
+            long generationTime = System.currentTimeMillis() - startTime;
+            throw new RuntimeException("Image generation failed: " + e.getMessage(), e);
+        }
+    }
+
+    @GetMapping("/image-providers")
+    public Map<String, Object> getImageProviders() {
+        return Map.of(
+                "providers", List.of(
+                        Map.of(
+                                "name", "dall-e",
+                                "displayName", "DALL-E 3 (OpenAI)",
+                                "description", "High-quality image generation from OpenAI",
+                                "models", List.of("dall-e-3"),
+                                "sizes", List.of("1024x1024", "1792x1024", "1024x1792")
+                        ),
+                        Map.of(
+                                "name", "openrouter",
+                                "displayName", "Stable Diffusion (OpenRouter)",
+                                "description", "Fast and efficient image generation via Stable Diffusion",
+                                "models", List.of(
+                                        "stabilityai/stable-diffusion-3",
+                                        "stabilityai/stable-diffusion-3-large",
+                                        "stabilityai/stable-diffusion-3-turbo"
+                                ),
+                                "sizes", List.of("1024x1024", "768x768", "512x512")
+                        )
+                )
+        );
     }
 }

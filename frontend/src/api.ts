@@ -29,12 +29,20 @@ type LLMChatRequest = {
   actionType?: string;
 };
 
+type LLMChatEditInstruction = {
+  path: string;
+  action: string;
+  content: string;
+};
+
 type LLMChatResponse = {
   response: string;
   modelUsed: string;
   modelSwitched: boolean;
   previousModel: string;
   editsApplied: boolean;
+  editPayload?: string;
+  edits?: LLMChatEditInstruction[];
 };
 
 type SignupRequest = {

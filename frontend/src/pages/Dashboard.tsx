@@ -20,12 +20,20 @@ type DashboardProps = {
   onLogout: () => void;
 };
 
+type LLMChatEditInstruction = {
+  path: string;
+  action: string;
+  content: string;
+};
+
 type LLMChatResponse = {
   response: string;
   modelUsed: string;
   modelSwitched: boolean;
   previousModel: string;
   editsApplied: boolean;
+  editPayload?: string;
+  edits?: LLMChatEditInstruction[];
 };
 
 type Project = {
@@ -100,6 +108,7 @@ export default function Dashboard({ token, currentUser, onLogin, onLogout }: Das
   const [llmResponse, setLlmResponse] = useState<string | null>(null);
   const [llmLoading, setLlmLoading] = useState(false);
   const [modelSwitched, setModelSwitched] = useState(false);
+  const [editInstructions, setEditInstructions] = useState<LLMChatEditInstruction[]>([]);
   const [projectMessages, setProjectMessages] = useState<ProjectMessage[]>([]);
   const [projectArtifact, setProjectArtifact] = useState<ProjectArtifact | null>(null);
   const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([]);
@@ -239,6 +248,7 @@ export default function Dashboard({ token, currentUser, onLogin, onLogout }: Das
     setUploadError(null);
     setLlmResponse(null);
     setModelSwitched(false);
+    setEditInstructions([]);
 
     if (!token || selectedProjectId === null) {
       setError("Select a project and sign in before sending a message.");
@@ -263,6 +273,7 @@ export default function Dashboard({ token, currentUser, onLogin, onLogout }: Das
       });
       setLlmResponse(response.response);
       setModelSwitched(response.modelSwitched);
+      setEditInstructions(response.edits ?? []);
       setLlmMessage("");
       await loadProjectMessages(selectedProjectId);
       if (response.editsApplied) {
@@ -615,6 +626,19 @@ export default function Dashboard({ token, currentUser, onLogin, onLogout }: Das
               <div className={`mt-4 rounded-3xl border border-slate-200 ${cardGradient} p-3 text-sm text-gray-800`}>
                 <div className="mb-2 text-sm text-slate-600">Response from Ronin</div>
                 <p>{llmResponse}</p>
+              </div>
+            )}
+            {editInstructions.length > 0 && (
+              <div className={`mt-4 rounded-3xl border border-slate-200 ${cardGradient} p-3 text-sm text-gray-800`}>
+                <div className="mb-2 text-sm font-semibold text-slate-900">Edit instructions detected</div>
+                <div className="space-y-3">
+                  {editInstructions.map((edit, index) => (
+                    <div key={`${edit.path}-${index}`} className="rounded-2xl bg-slate-50 p-3">
+                      <div className="text-slate-700 font-semibold">{edit.action.toUpperCase()} {edit.path}</div>
+                      <pre className="mt-2 overflow-x-auto rounded-xl bg-white p-3 text-xs text-slate-700">{edit.content || "(no content provided)"}</pre>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </section>

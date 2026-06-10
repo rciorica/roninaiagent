@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
+import Chat from "./pages/Chat";
 import AdminDashboard from "./pages/AdminDashboard";
 import { LoginPage } from "./pages/Login";
 import { SignupPage } from "./pages/Signup";

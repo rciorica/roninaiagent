@@ -1,4 +1,5 @@
 import kyokushinLogo from "../assets/Kyokushin Karate Logo Vector.svg";
+import { Link } from "react-router-dom";
 import BeltBadge from "./BeltBadge";
 import type { CurrentUser } from "../App";
 
@@ -43,6 +44,12 @@ export default function Header({
         ) : (
           <span className="text-xs sm:text-sm text-gray-600">Not signed in</span>
         )}
+        <Link
+          to="/chat"
+          className="rounded-md border border-slate-900/10 bg-white px-2 sm:px-3 py-1 text-xs sm:text-sm text-slate-900 hover:bg-slate-100 whitespace-nowrap"
+        >
+          Open Chat
+        </Link>
         <button
           onClick={onLogout}
           className="rounded-md bg-slate-950 px-2 sm:px-3 py-1 text-xs sm:text-sm text-white hover:bg-slate-800 whitespace-nowrap"

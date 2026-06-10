@@ -1,8 +1,8 @@
 package com.ronin.llm.providers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ronin.config.OpenRouterProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -20,21 +20,28 @@ public class OpenRouterClient {
     private final String apiKey;
     private final String apiUrl;
 
-    public OpenRouterClient(WebClient.Builder webClientBuilder, OpenRouterProperties properties) {
+    public OpenRouterClient(WebClient.Builder webClientBuilder,
+                            @Value("${openrouter.api.key:}") String apiKey,
+                            @Value("${openrouter.api.url:https://openrouter.ai/api/v1}") String apiUrl) {
         this.webClientBuilder = webClientBuilder;
-        this.apiKey = properties.getKey();
-        this.apiUrl = properties.getUrl();
+        
+        // Fallback to environment variable if property not set
+        String finalKey = apiKey;
+        if (!StringUtils.hasText(finalKey)) {
+            finalKey = System.getenv("OPENROUTER_API_KEY");
+            log.info("OpenRouter API key loaded from OPENROUTER_API_KEY environment variable");
+        }
         
         log.info("OpenRouterClient initialized");
-        log.info("  URL: {}", this.apiUrl);
-        log.info("  API Key present: {}", StringUtils.hasText(this.apiKey));
-        log.info("  API Key length: {}", this.apiKey != null ? this.apiKey.length() : 0);
+        log.info("  URL: {}", apiUrl);
+        log.info("  API Key configured: {}", StringUtils.hasText(finalKey));
         
-        if (!StringUtils.hasText(this.apiKey)) {
-            log.error("CRITICAL: OpenRouter API key is empty or not configured!");
-            log.error("  - Check OPENROUTER_API_KEY environment variable is set");
-            log.error("  - Check openrouter.api.key property is configured");
+        if (!StringUtils.hasText(finalKey)) {
+            log.warn("OpenRouter API key is not configured. Set OPENROUTER_API_KEY environment variable for project generation to work.");
         }
+        
+        this.apiKey = finalKey;
+        this.apiUrl = apiUrl;
     }
 
     public OpenRouterResult generate(String model, String prompt) {
@@ -73,17 +80,13 @@ public class OpenRouterClient {
 
     private OpenRouterResult callOpenRouter(String baseUrl, String model, String prompt, boolean fallbackAttempted) {
         if (!StringUtils.hasText(apiKey)) {
-            log.error("Cannot call OpenRouter: API key is empty");
-            throw new RuntimeException("OpenRouter API key is not configured. Set OPENROUTER_API_KEY environment variable.");
+            log.error("Cannot call OpenRouter: API key is empty. Please set OPENROUTER_API_KEY environment variable.");
+            throw new RuntimeException("OpenRouter API key not configured");
         }
         
-        log.debug("Calling OpenRouter API:");
-        log.debug("  URL: {}", baseUrl);
-        log.debug("  Model: {}", model);
-        log.debug("  API Key length: {}", apiKey.length());
+        log.debug("Calling OpenRouter: model={}, apiKeyLength={}", model, apiKey.length());
         
         String authHeader = "Bearer " + apiKey;
-        log.debug("  Authorization header set: {}", authHeader.substring(0, Math.min(20, authHeader.length())) + "...");
         
         WebClient client = webClientBuilder
                 .baseUrl(baseUrl)
@@ -132,20 +135,17 @@ public class OpenRouterClient {
             return new OpenRouterResult(content, totalTokens);
         } catch (WebClientResponseException e) {
             String body = e.getResponseBodyAsString();
-            log.error("OpenRouter returned HTTP {}: {}", e.getRawStatusCode(), body);
+            log.error("OpenRouter API returned HTTP {}: {}", e.getRawStatusCode(), body);
             
             if (e.getRawStatusCode() == 401) {
-                log.error("AUTHENTICATION FAILED:");
-                log.error("  - API Key length: {}", apiKey.length());
-                log.error("  - API Key starts with: {}", apiKey.substring(0, Math.min(10, apiKey.length())));
-                log.error("  - Response: {}", body);
+                log.error("AUTHENTICATION ERROR - verify OPENROUTER_API_KEY is set correctly");
             }
             
             if (!fallbackAttempted && ((e.getRawStatusCode() == 400 && body != null && (body.contains("not a valid model ID") || body.contains("invalid request error")))
                     || (e.getRawStatusCode() == 404 && body != null && body.contains("No endpoints found")))) {
                 String fallbackModel = resolveFallbackModel(model);
                 if (!fallbackModel.equals(model)) {
-                    log.warn("Retrying OpenRouter call with fallback model {} after endpoint error for {}", fallbackModel, model);
+                    log.warn("Retrying with fallback model {}", fallbackModel);
                     return callOpenRouter(baseUrl, fallbackModel, prompt, true);
                 }
             }

@@ -21,11 +21,11 @@ public class OpenRouterClient {
     private final String apiUrl;
 
     public OpenRouterClient(WebClient.Builder webClientBuilder,
-                            @Value("${openrouter.api.key}") String apiKey,
+                            @Value("${openrouter.api.key:}") String apiKey,
                             @Value("${openrouter.api.url:https://openrouter.ai/api/v1}") String apiUrl) {
         this.webClientBuilder = webClientBuilder;
         if (!StringUtils.hasText(apiKey)) {
-            throw new IllegalStateException("OpenRouter API key is not configured. Set OPENROUTER_API_KEY in the environment or openrouter.api.key in properties.");
+            log.warn("OpenRouter API key is not configured. Set OPENROUTER_API_KEY environment variable for project generation to work.");
         }
         this.apiKey = apiKey;
         this.apiUrl = apiUrl;

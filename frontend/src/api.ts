@@ -317,3 +317,51 @@ export async function fetchAdminSummary(token: string) {
     },
   });
 }
+
+// Image Generation API
+type ImageGenerationRequest = {
+  prompt: string;
+  projectId?: number;
+  provider?: string; // "dall-e" or "openrouter"
+  model?: string; // e.g., "dall-e-3" or "stabilityai/stable-diffusion-3"
+  size?: string; // e.g., "1024x1024"
+  quality?: number; // 0 for standard, 1 for HD (DALL-E only)
+};
+
+type ImageProvider = {
+  name: string;
+  displayName: string;
+  description: string;
+  models: string[];
+  sizes: string[];
+};
+
+type ImageGenerationResponse = {
+  imageUrl: string;
+  provider: string;
+  prompt: string;
+  revisedPrompt?: string;
+  format: string;
+  generationTimeMs: number;
+};
+
+export async function generateImage(
+  token: string,
+  body: ImageGenerationRequest
+): Promise<ImageGenerationResponse> {
+  return apiFetch("/llm/generate-image", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function fetchImageProviders(token: string): Promise<{ providers: ImageProvider[] }> {
+  return apiFetch("/llm/image-providers", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

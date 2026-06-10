@@ -8,6 +8,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -55,7 +57,20 @@ public class OpenRouterClient {
         log.info("API Key Present: {}", StringUtils.hasText(finalKey));
         if (StringUtils.hasText(finalKey)) {
             log.info("API Key Length: {} chars", finalKey.length());
-            log.info("API Key Starts With: {}", finalKey.substring(0, Math.min(20, finalKey.length())));
+            log.info("API Key Full Value: '{}'", finalKey);
+            log.info("API Key Hex: {}", bytesToHex(finalKey.getBytes(StandardCharsets.UTF_8)));
+            log.info("API Key Base64: {}", Base64.getEncoder().encodeToString(finalKey.getBytes(StandardCharsets.UTF_8)));
+            
+            // Check for common issues
+            if (finalKey.contains("[") || finalKey.contains("]")) {
+                log.warn("WARNING: API Key contains bracket characters - may be a placeholder!");
+            }
+            if (finalKey.equals("[REDACTED]")) {
+                log.error("CRITICAL: API Key is the literal string '[REDACTED]' - not a real API key!");
+            }
+            if (finalKey.length() < 20) {
+                log.warn("WARNING: API Key is very short ({} chars) - typical OpenRouter keys are 40+ chars", finalKey.length());
+            }
         }
         log.info("=========================================");
         
@@ -69,6 +84,14 @@ public class OpenRouterClient {
         
         this.apiKey = finalKey != null ? finalKey : "";
         this.apiUrl = apiUrl;
+    }
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 
     public OpenRouterResult generate(String model, String prompt) {
@@ -117,7 +140,8 @@ public class OpenRouterClient {
         log.debug("  URL: {}", baseUrl);
         log.debug("  Model: {}", model);
         log.debug("  API Key Length: {}", apiKey.length());
-        log.debug("  Authorization Header: Bearer {}", apiKey.substring(0, Math.min(15, apiKey.length())) + "...");
+        log.debug("  API Key Full: '{}'", apiKey);
+        log.debug("  Authorization Header: Bearer {}", apiKey.substring(0, Math.min(20, apiKey.length())) + "...");
         
         String authHeader = "Bearer " + apiKey;
         
@@ -126,7 +150,7 @@ public class OpenRouterClient {
                 .build();
 
         try {
-            log.debug("Sending POST request to /chat/completions");
+            log.debug("Sending POST request to /chat/completions with Authorization header");
             String responseJson = client.post()
                     .uri("/chat/completions")
                     .header("Authorization", authHeader)
@@ -166,7 +190,7 @@ public class OpenRouterClient {
                 totalTokens = response.getUsage().getPromptTokens() + response.getUsage().getCompletionTokens();
             }
 
-            log.debug("OpenRouter call successful: {} tokens used", totalTokens);
+            log.info("OpenRouter call successful: {} tokens used", totalTokens);
             return new OpenRouterResult(content, totalTokens);
         } catch (WebClientResponseException e) {
             String body = e.getResponseBodyAsString();
@@ -174,16 +198,21 @@ public class OpenRouterClient {
             log.error("Response body: {}", body);
             
             if (e.getRawStatusCode() == 401) {
-                log.error("========== AUTHENTICATION FAILURE ==========");
-                log.error("API returned 401 Unauthorized");
-                log.error("API Key Length: {}", apiKey.length());
-                log.error("API Key Preview: {}", apiKey.substring(0, Math.min(15, apiKey.length())) + "...");
-                log.error("Verify:");
-                log.error("  1. OPENROUTER_API_KEY is set on Heroku");
-                log.error("  2. API Key is valid and not expired");
-                log.error("  3. API Key has required permissions");
-                log.error("Response: {}", body);
-                log.error("==========================================");
+                log.error("========== AUTHENTICATION FAILURE (401) ==========");
+                log.error("API Key Details:");
+                log.error("  Length: {} chars", apiKey.length());
+                log.error("  Full Value: '{}'", apiKey);
+                log.error("  Hex: {}", bytesToHex(apiKey.getBytes(StandardCharsets.UTF_8)));
+                log.error("  Starts with: {}", apiKey.substring(0, Math.min(10, apiKey.length())));
+                log.error("");
+                log.error("Possible causes:");
+                log.error("  1. API Key is invalid or expired");
+                log.error("  2. API Key doesn't have required permissions");
+                log.error("  3. API Key is malformed (should start with 'sk-or-')");
+                log.error("  4. API Key is set to placeholder value like '[REDACTED]'");
+                log.error("");
+                log.error("OpenRouter Response: {}", body);
+                log.error("================================================");
             }
             
             if (!fallbackAttempted && ((e.getRawStatusCode() == 400 && body != null && (body.contains("not a valid model ID") || body.contains("invalid request error")))

@@ -64,9 +64,16 @@ public class LLMController {
         return Map.of(
                 "providers", List.of(
                         Map.of(
+                                "name", "pollinations-ai",
+                                "displayName", "Pollinations.ai (Flux Pro)",
+                                "description", "Free high-quality image generation - no API key required",
+                                "models", List.of("flux-pro"),
+                                "sizes", List.of("1024x1024", "768x768", "1280x720", "1920x1080")
+                        ),
+                        Map.of(
                                 "name", "dall-e",
                                 "displayName", "DALL-E 3 (OpenAI)",
-                                "description", "High-quality image generation from OpenAI",
+                                "description", "Premium image generation (requires OPENAI_API_KEY)",
                                 "models", List.of("dall-e-3"),
                                 "sizes", List.of("1024x1024", "1792x1024", "1024x1792")
                         )

@@ -98,76 +98,35 @@ public class ImageGenerationService {
     }
 
     /**
-     * Generate an image using Stable Diffusion via OpenRouter
-     * Requires OPENROUTER_API_KEY environment variable
+     * Generate an image using Pollinations.ai (free, no API key required)
      */
-    public ImageGenerationResult generateImageStableDiffusion(String prompt, String model, String size) {
-        if (openRouterApiKey == null || openRouterApiKey.isBlank()) {
-            throw new IllegalStateException("OpenRouter API key not configured. Set OPENROUTER_API_KEY environment variable.");
-        }
-
+    public ImageGenerationResult generateImagePollinationsAi(String prompt, String size) {
         try {
             // Parse size like "1024x1024" into height and width
-            int width = 1024, height = 1024;
-            if (size != null && size.contains("x")) {
-                String[] parts = size.split("x");
-                width = Integer.parseInt(parts[0]);
-                height = Integer.parseInt(parts[1]);
-            }
+            String selectedSize = size != null ? size : "1024x1024";
+            String[] sizeParts = selectedSize.split("x");
+            String width = sizeParts[0];
+            String height = sizeParts.length > 1 ? sizeParts[1] : sizeParts[0];
 
-            Map<String, Object> requestBody = new LinkedHashMap<>();
-            requestBody.put("prompt", prompt);
-            requestBody.put("height", height);
-            requestBody.put("width", width);
-            requestBody.put("num_inference_steps", 30);
+            // Pollinations.ai uses a simple URL format for image generation
+            String encodedPrompt = java.net.URLEncoder.encode(prompt, "UTF-8");
+            String imageUrl = "https://image.pollinations.ai/prompt/" + encodedPrompt + 
+                    "?width=" + width + 
+                    "&height=" + height + 
+                    "&seed=random&model=flux-pro";
 
-            String selectedModel = model != null ? model : "stabilityai/stable-diffusion-3";
-
-            String requestJson = OBJECT_MAPPER.writeValueAsString(requestBody);
-
-            WebClient client = webClientBuilder
-                    .baseUrl("https://openrouter.ai")
-                    .defaultHeader("Authorization", "Bearer " + openRouterApiKey)
-                    .defaultHeader("HTTP-Referer", "https://ronin-backend.herokuapp.com")
-                    .build();
-
-            String response = client.post()
-                    .uri("/api/v1/images/generations")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(requestJson)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-
-            if (response == null) {
-                throw new RuntimeException("Empty response from OpenRouter API");
-            }
-
-            Map<String, Object> responseMap = OBJECT_MAPPER.readValue(response, Map.class);
-
-            if (responseMap.containsKey("error")) {
-                Map<String, Object> error = (Map<String, Object>) responseMap.get("error");
-                String errorMessage = error.get("message").toString();
-                throw new RuntimeException("OpenRouter API error: " + errorMessage);
-            }
-
-            List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
-            if (data == null || data.isEmpty()) {
-                throw new RuntimeException("No image data in OpenRouter response");
-            }
-
-            String imageUrl = data.get(0).get("url").toString();
+            log.debug("Generated image URL: {}", imageUrl);
 
             return new ImageGenerationResult(
                     imageUrl,
-                    selectedModel,
+                    "pollinations-ai",
                     prompt,
                     null,
                     "url"
             );
 
         } catch (Exception e) {
-            log.error("Failed to generate image with Stable Diffusion: {}", e.getMessage(), e);
+            log.error("Failed to generate image with Pollinations.ai: {}", e.getMessage(), e);
             throw new RuntimeException("Image generation failed: " + e.getMessage());
         }
     }
@@ -184,8 +143,8 @@ public class ImageGenerationService {
 
         ImageGenerationResult result = switch (selectedProvider.toLowerCase()) {
             case "dall-e", "openai" -> generateImageDallE(prompt, size, quality);
-            // Note: OpenRouter image generation is not currently supported
-            default -> throw new IllegalArgumentException("Unsupported image generation provider: " + selectedProvider + ". Only DALL-E (OpenAI) is currently supported.");
+            case "pollinations", "pollinations-ai", "flux-pro" -> generateImagePollinationsAi(prompt, size);
+            default -> throw new IllegalArgumentException("Unsupported image generation provider: " + selectedProvider + ". Supported: dall-e, pollinations-ai");
         };
 
         // Save generated image to database
@@ -220,11 +179,11 @@ public class ImageGenerationService {
     }
 
     private String determineAvailableProvider() {
-        // Prefer DALL-E (OpenRouter image generation endpoint is not available)
         if (openAiApiKey != null && !openAiApiKey.isBlank()) {
             return "dall-e";
         } else {
-            throw new IllegalStateException("No image generation API keys configured. Set OPENAI_API_KEY for DALL-E image generation.");
+            // Fallback to free Pollinations.ai (no API key needed)
+            return "pollinations-ai";
         }
     }
 
